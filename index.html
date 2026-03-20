@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🎓 StudyPal</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:'Nunito Sans',system-ui,sans-serif;background:#FAFAF7;color:#1A1A1A;font-size:14px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#DDD;border-radius:3px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+/* ── MODAL API KEY ── */
+#api-overlay{position:fixed;inset:0;background:rgba(15,15,15,.55);display:flex;align-items:center;justify-content:center;z-index:1000;animation:fadein .2s ease}
+#api-box{background:#fff;border-radius:20px;padding:36px 36px 32px;width:440px;max-width:92vw;box-shadow:0 24px 64px rgba(0,0,0,.18)}
+#api-box h2{font-family:Nunito,sans-serif;font-weight:900;font-size:22px;color:#111;margin-bottom:8px}
+#api-box p{color:#666;font-size:14px;line-height:1.6;margin-bottom:20px}
+#api-box a{color:#6D28D9;text-decoration:none;font-weight:700}
+#api-box a:hover{text-decoration:underline}
+#apikey-input{width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #DDD;font-size:13.5px;font-family:inherit;outline:none;transition:border-color .2s;letter-spacing:.5px;color:#333;background:#FAFAF7}
+#apikey-input:focus{border-color:#6D28D9}
+#apikey-input.err{border-color:#BE123C;background:#FFF1F2}
+#api-err{color:#BE123C;font-size:12.5px;margin-top:8px;min-height:18px;font-weight:600}
+#api-save{width:100%;margin-top:14px;padding:13px;border-radius:12px;border:none;background:#6D28D9;color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:Nunito,sans-serif;transition:opacity .15s}
+#api-save:hover{opacity:.88}
+#api-note{margin-top:14px;font-size:11.5px;color:#AAA;text-align:center;line-height:1.5}
+
+/* ── LAYOUT ── */
+#app{display:flex;flex-direction:column;height:100vh}
+#nav{background:#fff;border-bottom:1px solid #EEE9E2;padding:0 16px;display:flex;align-items:center;height:52px;gap:10px;flex-shrink:0}
+#logo{font-family:Nunito,sans-serif;font-weight:900;font-size:18px;letter-spacing:-.5px;flex-shrink:0}
+#bc{font-size:12px;font-weight:600;color:#AAA;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+#srch{padding:5px 12px;border-radius:18px;border:1.5px solid #EEE9E2;font-size:12.5px;width:180px;outline:none;background:#FAFAF7;font-family:inherit;transition:border-color .2s}
+#key-btn{padding:5px 11px;border-radius:14px;border:1.5px solid #EEE9E2;background:#FAFAF7;font-size:11px;font-weight:700;cursor:pointer;color:#888;font-family:Nunito,sans-serif;transition:all .15s}
+#key-btn:hover{border-color:#6D28D9;color:#6D28D9}
+#body{display:flex;flex:1;overflow:hidden}
+#sidebar{width:262px;min-width:262px;background:#fff;border-right:1px solid #EEE9E2;display:flex;flex-direction:column;overflow:hidden}
+#pills-wrap{padding:10px 8px;border-bottom:1px solid #F5F2EC;flex-shrink:0}
+#pills{display:flex;flex-wrap:wrap;gap:5px}
+.pill{padding:5px 9px;border-radius:14px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;transition:all .15s}
+#tlist-wrap{flex:1;overflow-y:auto;padding:6px 5px 20px}
+.lbl{font-size:9.5px;font-weight:800;color:#BBB;text-transform:uppercase;letter-spacing:1px;margin:6px 0 7px 8px;display:block}
+.ti{padding:8px 8px 8px 12px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:500;line-height:1.4;background:transparent;border-left:3px solid transparent;margin-bottom:1px;transition:all .1s;color:#555}
+.ti:hover{background:#F3F1EC}
+#main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
+#thead{flex-shrink:0}
+#thead-top{padding:16px 24px 0;display:flex;align-items:flex-start;gap:12px}
+#ticon{font-size:28px;line-height:1.1;flex-shrink:0}
+#tmeta{flex:1;min-width:0}
+#tslbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}
+#ttitle{font-family:Nunito,sans-serif;font-weight:900;font-size:18px;color:#111;line-height:1.3}
+#tabs{display:flex;padding:10px 24px 0;gap:2px}
+.tab{padding:8px 18px;border:none;cursor:pointer;font-weight:600;font-size:13px;font-family:Nunito,sans-serif;border-radius:8px 8px 0 0;transition:all .15s;border-top:2.5px solid transparent;color:#999;background:transparent}
+.tab.on{font-weight:800;background:#fff;color:var(--sc);border-top-color:var(--sc)}
+#content{padding:24px;flex:1}
+.card{background:#fff;border-radius:16px;padding:26px 28px;border:1px solid #EEE9E2;animation:fadeup .3s ease}
+.loader{text-align:center;padding:64px 20px}
+.spinner{width:36px;height:36px;border:3px solid #F0EEE8;border-top-color:var(--sc);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+.lmsg{font-weight:700;color:var(--sc);font-size:14px;margin:0}
+.opt{width:100%;text-align:left;padding:12px 15px;border-radius:10px;border:2px solid #EDEBE5;background:#FAFAF7;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:9px;display:block;color:#333;transition:all .15s;font-family:inherit}
+.opt:disabled{cursor:default}
+.opt.ok{background:#ECFDF5!important;border-color:#059669!important;color:#065F46!important}
+.opt.ko{background:#FFF1F2!important;border-color:#BE123C!important;color:#9F1239!important}
+.opt.dim{background:#F9F8F6;border-color:#E5E3DE;color:#999}
+</style>
+</head>
+<body>
+
+<!-- ── MODAL API KEY ── -->
+<div id="api-overlay">
+  <div id="api-box">
+    <div style="font-size:36px;margin-bottom:12px">🎓</div>
+    <h2>Benvenuto in StudyPal!</h2>
+    <p>Per generare riassunti, mappe e quiz hai bisogno di una <strong>API key di Anthropic</strong>.<br>
+    Puoi ottenerla gratuitamente su <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys.</p>
+    <input id="apikey-input" type="password" placeholder="sk-ant-api03-…" autocomplete="off" spellcheck="false"/>
+    <div id="api-err"></div>
+    <button id="api-save">Inizia a studiare →</button>
+    <p id="api-note">🔒 La chiave viene salvata solo nel tuo browser (localStorage) e non viene mai condivisa.</p>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app" style="display:none">
+  <div id="nav">
+    <span id="logo">🎓 StudyPal</span>
+    <span style="color:#DDD;font-size:16px">|</span>
+    <span id="bc">Seleziona un argomento…</span>
+    <div id="nav-right">
+      <input id="srch" placeholder="🔍 Cerca…" autocomplete="off"/>
+      <button id="key-btn" title="Cambia API key">🔑 API key</button>
+    </div>
+  </div>
+  <div id="body">
+    <aside id="sidebar">
+      <div id="pills-wrap"><span class="lbl">Materie</span><div id="pills"></div></div>
+      <div id="tlist-wrap"><span class="lbl" id="tlbl">Argomenti</span><div id="tlist"></div></div>
+    </aside>
+    <main id="main">
+      <div id="thead">
+        <div id="thead-top">
+          <span id="ticon"></span>
+          <div id="tmeta"><div id="tslbl"></div><div id="ttitle"></div></div>
+        </div>
+        <div id="tabs">
+          <button class="tab" data-t="summary">📝 Riassunto</button>
+          <button class="tab" data-t="map">🗺️ Mappa</button>
+          <button class="tab" data-t="quiz">🎯 Quiz</button>
+        </div>
+      </div>
+      <div id="content"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════
+   DATI
+══════════════════════════════ */
+const SUBS = {
+  letteratura:{id:"letteratura",label:"Letteratura",icon:"📚",color:"#C0395E",bg:"#FFF0F4",accent:"#FFD6E2",topics:[
+    "L'epica omerica: l'Iliade","L'epica omerica: l'Odissea","L'Eneide di Virgilio",
+    "La commedia latina: Plauto e Terenzio","La lirica latina: Catullo e Orazio",
+    "Origini della letteratura italiana","La Scuola Siciliana","Il Dolce Stil Novo",
+    "Dante Alighieri: vita e opere minori","La Divina Commedia: Inferno",
+    "La Divina Commedia: Purgatorio e Paradiso",
+    "Francesco Petrarca e il Canzoniere","Giovanni Boccaccio e il Decameron",
+    "Umanesimo e Rinascimento letterario","Niccolò Machiavelli",
+    "Ludovico Ariosto e l'Orlando Furioso","Torquato Tasso e la Gerusalemme Liberata",
+    "Il Seicento e il Barocco","Carlo Goldoni e la riforma del teatro",
+    "L'Illuminismo letterario in Italia","Giuseppe Parini","Vittorio Alfieri","Ugo Foscolo",
+    "Il Romanticismo in Europa e in Italia","Alessandro Manzoni e I Promessi Sposi",
+    "Giacomo Leopardi: vita e Operette Morali","Giacomo Leopardi: I Canti",
+    "La Scapigliatura","Il Verismo e Giovanni Verga","Giosuè Carducci",
+    "Gabriele D'Annunzio","Giovanni Pascoli",
+    "Luigi Pirandello: narrativa e teatro","Italo Svevo",
+    "Il Futurismo e le Avanguardie","Giuseppe Ungaretti","Eugenio Montale",
+    "Salvatore Quasimodo e l'Ermetismo","Il Neorealismo italiano",
+    "Cesare Pavese","Primo Levi","Italo Calvino","La letteratura italiana contemporanea"
+  ]},
+  storia:{id:"storia",label:"Storia",icon:"🏛️",color:"#B45309",bg:"#FFFBF0",accent:"#FEF3C7",topics:[
+    "Preistoria: Paleolitico e Neolitico","Le prime civiltà fluviali: Mesopotamia",
+    "L'antico Egitto","Le civiltà del Mediterraneo orientale",
+    "La Grecia arcaica e le poleis","L'età classica greca: Atene e Sparta",
+    "Alessandro Magno e l'ellenismo","Roma: dalle origini alla Repubblica",
+    "Roma: dall'espansione alla crisi della Repubblica",
+    "L'Impero Romano: Augusto e il Principato","La caduta dell'Impero Romano d'Occidente",
+    "L'Alto Medioevo e i Regni romano-barbarici","Carlo Magno e il Sacro Romano Impero",
+    "Il feudalesimo","Il Basso Medioevo: Comuni e Signorie","Le Crociate",
+    "La peste nera e la crisi del Trecento","L'Umanesimo e il Rinascimento",
+    "Le Scoperte geografiche","La Riforma protestante","La Controriforma",
+    "Il Seicento: guerre e rivoluzioni","L'assolutismo monarchico: Luigi XIV",
+    "La Rivoluzione scientifica","L'Illuminismo",
+    "La Rivoluzione americana","La Rivoluzione francese","L'età napoleonica",
+    "La Restaurazione e i moti rivoluzionari","Il Risorgimento italiano","L'Unità d'Italia",
+    "La Seconda Rivoluzione Industriale","L'imperialismo e il colonialismo",
+    "La Belle Époque e la società di massa","La Prima Guerra Mondiale",
+    "La Rivoluzione russa","Il dopoguerra e la crisi del 1929",
+    "Il Fascismo in Italia","Il Nazismo in Germania",
+    "La Seconda Guerra Mondiale","La Shoah",
+    "Il dopoguerra e la Guerra Fredda","La decolonizzazione",
+    "Il '68 e i movimenti sociali","La caduta del Muro di Berlino",
+    "L'Italia repubblicana","Il mondo contemporaneo"
+  ]},
+  biologia:{id:"biologia",label:"Biologia",icon:"🧬",color:"#047857",bg:"#F0FDF9",accent:"#CCFBE7",topics:[
+    "La chimica della vita: atomi e molecole","L'acqua e le proprietà della vita",
+    "Carboidrati, lipidi e proteine","Gli acidi nucleici: DNA e RNA",
+    "La cellula procariotica","La cellula eucariotica: struttura",
+    "La membrana cellulare e il trasporto","Il nucleo e il DNA",
+    "Mitocondri, cloroplasti e altri organuli",
+    "La fotosintesi clorofilliana","La respirazione cellulare aerobica",
+    "La fermentazione","Il ciclo cellulare e la mitosi","La meiosi",
+    "La genetica mendeliana: leggi di Mendel","La dominanza e la recessività",
+    "Genetica molecolare: struttura del DNA","La replicazione del DNA",
+    "La trascrizione e la traduzione","Le mutazioni genetiche",
+    "La teoria dell'evoluzione: Darwin","Selezione naturale e adattamento",
+    "L'evoluzione umana","La classificazione degli esseri viventi",
+    "Virus e batteri","Funghi e protisti",
+    "Le piante: struttura e funzioni","Gli animali invertebrati","Gli animali vertebrati",
+    "Ecologia: ecosistemi e biomi","Le catene alimentari",
+    "I cicli biogeochimici","La biodiversità",
+    "Il sistema digerente umano","Il sistema circolatorio","Il sistema respiratorio",
+    "Il sistema nervoso","Il sistema endocrino","Il sistema muscolo-scheletrico",
+    "Il sistema immunitario","Il sistema riproduttivo","Le biotecnologie e il DNA ricombinante"
+  ]},
+  scienze_terra:{id:"scienze_terra",label:"Scienze della Terra",icon:"🌍",color:"#0369A1",bg:"#F0F9FF",accent:"#BAE6FD",topics:[
+    "L'origine dell'Universo: Big Bang","Stelle e ciclo vitale stellare",
+    "Galassie e struttura dell'Universo","Il Sistema Solare: formazione",
+    "Il Sole","I pianeti terrestri","I pianeti gioviani","Luna e altri corpi celesti",
+    "L'origine della Terra","La struttura interna della Terra","Il campo magnetico terrestre",
+    "I minerali: proprietà e classificazione","Le rocce ignee",
+    "Le rocce sedimentarie","Le rocce metamorfiche","Il ciclo delle rocce",
+    "La deriva dei continenti: Wegener","La tettonica delle placche",
+    "I margini delle placche tettoniche","I vulcani: struttura e tipologie",
+    "L'attività vulcanica in Italia","I terremoti: onde sismiche",
+    "La sismologia e la scala Richter","La prevenzione sismica",
+    "Il modellamento del paesaggio: erosione","I fiumi e il ciclo idrologico",
+    "I ghiacciai e le forme glaciali","Il mare: correnti e maree","Le coste e i litorali",
+    "L'atmosfera: strati e composizione","Il tempo meteorologico",
+    "Il clima e le zone climatiche","L'effetto serra naturale",
+    "I cambiamenti climatici antropici","La fascia di ozono",
+    "Le energie rinnovabili","L'inquinamento e l'impatto ambientale","La gestione delle risorse"
+  ]},
+  matematica:{id:"matematica",label:"Matematica",icon:"📐",color:"#6D28D9",bg:"#F5F3FF",accent:"#DDD6FE",topics:[
+    "Numeri naturali e operazioni","Multipli, divisori e numeri primi",
+    "Numeri interi relativi","Frazioni e numeri razionali",
+    "Numeri decimali e percentuali","Potenze e loro proprietà",
+    "Radici quadrate e cubiche","Notazione scientifica",
+    "Espressioni algebriche","Monomi e operazioni con i monomi",
+    "Polinomi e operazioni","Prodotti notevoli","Fattorizzazione dei polinomi",
+    "Equazioni di primo grado","Disequazioni di primo grado","Sistemi di equazioni lineari",
+    "Equazioni di secondo grado","Formula quadratica e discriminante",
+    "Equazioni di grado superiore","Disequazioni di secondo grado",
+    "Il piano cartesiano","La retta: equazione e grafico","La parabola",
+    "La circonferenza","L'ellisse e l'iperbole",
+    "Geometria piana: triangoli","Geometria piana: quadrilateri",
+    "Cerchio, poligoni regolari e aree","Teorema di Pitagora","Teoremi di Euclide",
+    "La geometria solida: poliedri","Solidi di rotazione: cilindro, cono, sfera",
+    "Trigonometria: seno, coseno, tangente","Formule trigonometriche",
+    "Funzioni e loro proprietà","Funzioni elementari e grafici",
+    "Funzioni esponenziali e logaritmiche",
+    "Limiti: definizione e calcolo","Derivate: definizione e regole",
+    "Applicazioni delle derivate","Integrali indefiniti","Integrali definiti e aree",
+    "Statistica descrittiva","Probabilità: eventi e calcolo combinatorio"
+  ]}
+};
+
+/* ══════════════════════════════
+   API KEY MANAGEMENT
+══════════════════════════════ */
+let API_KEY = localStorage.getItem("sp_apikey") || "";
+
+function showKeyModal(errMsg) {
+  const overlay = document.getElementById("api-overlay");
+  overlay.style.display = "flex";
+  document.getElementById("app").style.display = "none";
+  if (errMsg) {
+    document.getElementById("api-err").textContent = errMsg;
+    document.getElementById("apikey-input").classList.add("err");
+  } else {
+    document.getElementById("api-err").textContent = "";
+    document.getElementById("apikey-input").classList.remove("err");
+  }
+  if (API_KEY) document.getElementById("apikey-input").value = API_KEY;
+  setTimeout(() => document.getElementById("apikey-input").focus(), 100);
+}
+
+function hideKeyModal() {
+  document.getElementById("api-overlay").style.display = "none";
+  document.getElementById("app").style.display = "flex";
+}
+
+document.getElementById("api-save").addEventListener("click", () => {
+  const val = document.getElementById("apikey-input").value.trim();
+  if (!val.startsWith("sk-")) {
+    document.getElementById("api-err").textContent = "⚠️ La chiave deve iniziare con sk-ant-…";
+    document.getElementById("apikey-input").classList.add("err");
+    return;
+  }
+  API_KEY = val;
+  localStorage.setItem("sp_apikey", val);
+  hideKeyModal();
+  renderAll();
+});
+
+document.getElementById("apikey-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("api-save").click();
+  document.getElementById("apikey-input").classList.remove("err");
+  document.getElementById("api-err").textContent = "";
+});
+
+document.getElementById("key-btn").addEventListener("click", () => {
+  cache = {}; loading = {};
+  showKeyModal();
+});
+
+/* ══════════════════════════════
+   STATO APP
+══════════════════════════════ */
+let sid="letteratura", tidx=0, tab="summary", srch="";
+let cache={}, loading={}, qstate=null;
+const S  = () => SUBS[sid];
+const tn = () => S().topics[tidx];
+const ck = () => sid + ":" + tidx;
+
+function setVars() {
+  const s = S();
+  document.documentElement.style.setProperty("--sc", s.color);
+  const th = document.getElementById("thead");
+  th.style.background = s.bg;
+  th.style.borderBottom = "1px solid " + s.accent;
+}
+
+/* ══════════════════════════════
+   CHIAMATA API
+══════════════════════════════ */
+async function callAPI(system, user) {
+  if (!API_KEY) throw new Error("no_key");
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": API_KEY,
+      "anthropic-version": "2023-06-01"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1400,
+      system,
+      messages: [{ role: "user", content: user }]
+    })
+  });
+  if (r.status === 401) throw new Error("auth_error");
+  if (!r.ok) throw new Error("http_" + r.status);
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message || "api_error");
+  return d.content?.[0]?.text || "";
+}
+
+function extractJSON(text) {
+  const t = text.trim();
+  try { return JSON.parse(t); } catch {}
+  const s = t.replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/i,"").trim();
+  try { return JSON.parse(s); } catch {}
+  const m = s.match(/\{[\s\S]*\}/);
+  if (m) { try { return JSON.parse(m[0]); } catch {} }
+  throw new Error("JSON non trovato");
+}
+
+/* ══════════════════════════════
+   MAPPA SVG
+══════════════════════════════ */
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+function layoutMap(nodes, edges, W, H) {
+  const cx=W/2, cy=H/2, pos={}, par={};
+  edges.forEach(e => { if (!par[e.to]) par[e.to] = e.from; });
+  const bt = t => nodes.filter(n => n.type === t);
+  const central=bt("central"), main=bt("main"), sub=bt("sub"), ex=bt("example");
+  central.forEach(n => { pos[n.id] = {x:cx, y:cy}; });
+  const Rm = Math.min(W*.26, H*.30);
+  main.forEach((n,i) => {
+    const a = (2*Math.PI*i/main.length) - Math.PI/2;
+    pos[n.id] = {x: cx+Rm*Math.cos(a), y: cy+Rm*Math.sin(a)};
+  });
+  const grp = (list, fb) => {
+    const g={};
+    list.forEach(n => { const p=par[n.id]||fb; (g[p]=g[p]||[]).push(n); });
+    return g;
+  };
+  Object.entries(grp(sub, main[0]?.id||"")).forEach(([pid,ns]) => {
+    const pp = pos[pid]||{x:cx,y:cy};
+    const a0 = Math.atan2(pp.y-cy, pp.x-cx);
+    const sp = Math.min(0.65, 0.5/Math.max(ns.length-1,1));
+    ns.forEach((n,i) => {
+      const a = a0+(i-(ns.length-1)/2)*sp, r=118+(i%2)*14;
+      pos[n.id] = {x:clamp(pp.x+r*Math.cos(a),76,W-76), y:clamp(pp.y+r*Math.sin(a),46,H-46)};
+    });
+  });
+  Object.entries(grp(ex, sub[0]?.id||main[0]?.id||"")).forEach(([pid,ns]) => {
+    const pp = pos[pid]||{x:cx+120,y:cy};
+    const a0 = Math.atan2(pp.y-cy, pp.x-cx);
+    ns.forEach((n,i) => {
+      const a = a0+(i-(ns.length-1)/2)*.5;
+      pos[n.id] = {x:clamp(pp.x+96*Math.cos(a),64,W-64), y:clamp(pp.y+96*Math.sin(a),38,H-38)};
+    });
+  });
+  return pos;
+}
+
+function wrapLabel(lbl, maxCh) {
+  const ws=lbl.split(" "), ls=[]; let c="";
+  for (const w of ws) {
+    const t = c ? c+" "+w : w;
+    if (t.length > maxCh && c) { ls.push(c); c=w; } else c=t;
+  }
+  if (c) ls.push(c);
+  return ls.slice(0,3);
+}
+
+function buildSVG(data, color) {
+  const W=720, H=480;
+  const pos = layoutMap(data.nodes, data.edges, W, H);
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const LH = 13;
+  const cfg = t => ({
+    central: {fill:color,       stroke:color,    tc:"#fff",    rw:98, rh:32, fs:12,  fw:800, rx:14},
+    main:    {fill:color+"22",  stroke:color,    tc:color,     rw:82, rh:28, fs:10,  fw:700, rx:9},
+    sub:     {fill:"#F8F7F5",   stroke:"#D5D2CC",tc:"#1A1A1A", rw:72, rh:25, fs:9.5, fw:600, rx:7},
+    example: {fill:"#FEFEFE",   stroke:"#DDDAD4",tc:"#3A3A3A", rw:64, rh:22, fs:9,   fw:500, rx:6},
+  }[t] || {fill:"#F5F5F5", stroke:"#CCC", tc:"#444", rw:66, rh:22, fs:9, fw:500, rx:6});
+
+  const p = [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">`,
+    `<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">`,
+    `<path d="M1 2L9 5L1 8" fill="none" stroke="#C8C4BE" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>`,
+    `<rect width="${W}" height="${H}" fill="#FAFAF8" rx="16"/>`
+  ];
+
+  // Edges
+  data.edges.forEach(e => {
+    const f=pos[e.from], t=pos[e.to]; if (!f||!t) return;
+    p.push(`<line x1="${f.x.toFixed(1)}" y1="${f.y.toFixed(1)}" x2="${t.x.toFixed(1)}" y2="${t.y.toFixed(1)}" stroke="#DEDBD5" stroke-width="1.3" marker-end="url(#arr)"/>`);
+  });
+
+  // Nodes
+  data.nodes.forEach(n => {
+    const pp=pos[n.id]; if (!pp) return;
+    const c = cfg(n.type);
+    const lines = wrapLabel(n.label, n.type==="central" ? 18 : 13);
+    const boxH = Math.max(c.rh, Math.ceil(lines.length*LH/2)+10);
+    const startY = pp.y - ((lines.length-1)*LH)/2;
+    p.push(`<rect x="${(pp.x-c.rw).toFixed(1)}" y="${(pp.y-boxH).toFixed(1)}" width="${c.rw*2}" height="${(boxH*2).toFixed(1)}" rx="${c.rx}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="${n.type==="central"?2:1}"/>`);
+    lines.forEach((l,li) => {
+      p.push(`<text x="${pp.x.toFixed(1)}" y="${(startY+li*LH).toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="${c.fs}" font-weight="${c.fw}" fill="${c.tc}" font-family="'Nunito',system-ui,sans-serif">${esc(l)}</text>`);
+    });
+  });
+  p.push("</svg>");
+  return p.join("");
+}
+
+/* ══════════════════════════════
+   RENDER HELPERS
+══════════════════════════════ */
+const mdH = t => "<p>" + t
+  .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+  .split(/\n\n+/).join('</p><p style="margin:0 0 12px">') + "</p>";
+
+const loaderHTML = msg =>
+  `<div class="loader"><div class="spinner"></div><p class="lmsg">${msg}</p></div>`;
+
+const errHTML = (which, isAuth) => isAuth
+  ? `<div style="text-align:center;padding:48px 20px">
+      <p style="font-size:36px;margin-bottom:12px">🔑</p>
+      <p style="color:#888;margin-bottom:6px;font-size:15px;font-weight:700">API key non valida o scaduta</p>
+      <p style="color:#AAA;margin-bottom:22px;font-size:13px">Controlla la tua chiave su console.anthropic.com</p>
+      <button onclick="document.getElementById('key-btn').click()" style="padding:10px 26px;border-radius:10px;border:none;background:#6D28D9;color:#fff;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit">🔑 Cambia API key</button>
+    </div>`
+  : `<div style="text-align:center;padding:48px 20px">
+      <p style="font-size:36px;margin-bottom:12px">😕</p>
+      <p style="color:#888;margin-bottom:20px;font-size:14px">Qualcosa è andato storto. Riprova!</p>
+      <button onclick="retry('${which}')" style="padding:10px 26px;border-radius:10px;border:none;background:var(--sc);color:#fff;font-weight:700;cursor:pointer;font-size:14px;font-family:inherit">🔄 Riprova</button>
+    </div>`;
+
+/* ══════════════════════════════
+   RENDER SIDEBAR / HEADER
+══════════════════════════════ */
+function renderNav() {
+  const s=S();
+  document.getElementById("logo").style.color = s.color;
+  document.getElementById("bc").textContent = s.icon+" "+s.label+" › "+tn();
+}
+
+function renderPills() {
+  const el=document.getElementById("pills"); el.innerHTML="";
+  Object.values(SUBS).forEach(s => {
+    const b=document.createElement("button"); b.className="pill";
+    b.textContent=s.icon+" "+s.label;
+    b.style.background = sid===s.id ? s.color : s.bg;
+    b.style.color       = sid===s.id ? "#fff"  : s.color;
+    b.onclick = () => { sid=s.id; tidx=0; tab="summary"; srch=""; qstate=null;
+      document.getElementById("srch").value=""; renderAll(); };
+    el.appendChild(b);
+  });
+}
+
+function renderTopics() {
+  const s=S();
+  const fl = s.topics.map((t,i)=>({t,i})).filter(({t})=>t.toLowerCase().includes(srch.toLowerCase()));
+  document.getElementById("tlbl").textContent = "Argomenti ("+(srch?fl.length:s.topics.length)+")";
+  const el=document.getElementById("tlist"); el.innerHTML="";
+  if (!fl.length) { el.innerHTML='<p style="color:#CCC;font-size:12px;padding:6px 12px">Nessun risultato</p>'; return; }
+  fl.forEach(({t,i}) => {
+    const active=tidx===i, d=document.createElement("div"); d.className="ti";
+    if (active) { d.style.fontWeight=700; d.style.background=s.bg; d.style.color=s.color; d.style.borderLeftColor=s.color; }
+    d.textContent=t;
+    d.onclick=()=>{ tidx=i; tab="summary"; srch=""; qstate=null;
+      document.getElementById("srch").value=""; renderAll(); };
+    el.appendChild(d);
+  });
+}
+
+function renderHeader() {
+  const s=S();
+  document.getElementById("ticon").textContent = s.icon;
+  document.getElementById("tslbl").textContent = s.label; document.getElementById("tslbl").style.color=s.color;
+  document.getElementById("ttitle").textContent = tn();
+  document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b.dataset.t===tab));
+}
+
+/* ══════════════════════════════
+   RENDER CONTENT
+══════════════════════════════ */
+function renderContent() {
+  const el=document.getElementById("content"), k=ck(), s=S();
+  el.style.maxWidth = tab==="quiz" ? "640px" : "760px";
+
+  /* ── RIASSUNTO ── */
+  if (tab==="summary") {
+    const d=cache[k+":summary"], l=loading[k+":summary"];
+    if (l) { el.innerHTML=loaderHTML("Preparo il riassunto… ✨"); return; }
+    if (!d) { el.innerHTML=""; return; }
+    if (d.__err) { el.innerHTML=errHTML("summary", d.__auth); return; }
+    el.innerHTML=`
+      <div class="card">
+        <div style="border-left:4px solid ${s.color};padding-left:14px;margin-bottom:20px">
+          <h2 style="font-family:Nunito,sans-serif;font-weight:800;font-size:15px;color:${s.color};margin:0">Riassunto</h2>
+        </div>
+        <div style="line-height:1.88;font-size:14.5px;color:#2A2A2A">${mdH(d)}</div>
+        <div style="display:flex;gap:8px;margin-top:22px;padding-top:16px;border-top:1px solid #F5F2EC;flex-wrap:wrap;align-items:center">
+          <button onclick="switchTab('map')" style="padding:7px 14px;border-radius:8px;border:none;background:${s.bg};color:${s.color};font-weight:700;cursor:pointer;font-size:12.5px;font-family:inherit">🗺️ Mappa concettuale</button>
+          <button onclick="switchTab('quiz')" style="padding:7px 14px;border-radius:8px;border:none;background:${s.bg};color:${s.color};font-weight:700;cursor:pointer;font-size:12.5px;font-family:inherit">🎯 Fai il quiz</button>
+          <div style="flex:1"></div>
+          <button onclick="window.print()" style="padding:7px 12px;border-radius:8px;border:1.5px solid ${s.accent};background:none;color:${s.color};font-weight:600;cursor:pointer;font-size:12.5px;font-family:inherit">🖨️ Stampa</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  /* ── MAPPA ── */
+  if (tab==="map") {
+    const d=cache[k+":map"], l=loading[k+":map"];
+    if (l) { el.innerHTML=loaderHTML("Costruisco la mappa concettuale… 🗺️"); return; }
+    if (!d) { el.innerHTML=""; return; }
+    if (d.__err) { el.innerHTML=errHTML("map", d.__auth); return; }
+    el.innerHTML=`
+      <div style="background:#fff;border-radius:16px;border:1px solid #EEE9E2;overflow:hidden;animation:fadeup .3s ease">
+        <div style="padding:14px 20px;border-bottom:1px solid ${s.accent};display:flex;align-items:center;gap:12px">
+          <div style="border-left:4px solid ${s.color};padding-left:12px">
+            <h2 style="font-family:Nunito,sans-serif;font-weight:800;font-size:15px;color:${s.color};margin:0">Mappa Concettuale</h2>
+            <p style="margin:2px 0 0;font-size:11px;color:#AAA">${d.nodes?.length||0} concetti · ${d.edges?.length||0} connessioni</p>
+          </div>
+          <div style="flex:1"></div>
+          <button onclick="window.print()" style="padding:6px 12px;border-radius:8px;border:1.5px solid ${s.accent};background:none;color:${s.color};font-weight:600;cursor:pointer;font-size:12px;font-family:inherit">🖨️ Stampa</button>
+        </div>
+        <div style="padding:16px;background:#FAFAF8">${buildSVG(d, s.color)}</div>
+        <div style="padding:10px 20px;background:${s.bg};display:flex;gap:18px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#666"><div style="width:10px;height:10px;border-radius:3px;background:${s.color}"></div>Tema centrale</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#666"><div style="width:10px;height:10px;border-radius:3px;background:${s.color}22;border:1px solid ${s.color}"></div>Concetti principali</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#666"><div style="width:10px;height:10px;border-radius:3px;background:#F8F7F5;border:1px solid #D5D2CC"></div>Sottoconcetti</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#666"><div style="width:10px;height:10px;border-radius:3px;background:#FEFEFE;border:1px solid #DDDAD4"></div>Esempi</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  /* ── QUIZ ── */
+  if (tab==="quiz") {
+    const d=cache[k+":quiz"], l=loading[k+":quiz"];
+    if (l) { el.innerHTML=loaderHTML("Preparo le domande… 🎯"); return; }
+    if (!d) { el.innerHTML=""; return; }
+    if (d.__err) { el.innerHTML=errHTML("quiz", d.__auth); return; }
+    if (!qstate) qstate={qIdx:0, answers:{}, done:false, finalScore:0};
+    if (qstate.done) renderScore(d); else renderQ(d);
+  }
+}
+
+/* ══════════════════════════════
+   QUIZ
+══════════════════════════════ */
+function renderQ(data) {
+  const el=document.getElementById("content"), s=S(), qs=qstate;
+  const q=data.questions[qs.qIdx], tot=data.questions.length;
+  const answered=qs.answers[qs.qIdx]!==undefined, sel=qs.answers[qs.qIdx];
+  const pct=Math.round((qs.qIdx/tot)*100), isLast=qs.qIdx+1>=tot;
+  const opts = q.options.map((opt,i) => {
+    let cls="opt";
+    if (answered) { if(i===q.correct) cls+=" ok"; else if(i===sel) cls+=" ko"; else cls+=" dim"; }
+    return `<button class="${cls}"${answered?" disabled":""} onclick="ansQ(${i})"><span style="font-weight:800;margin-right:9px;opacity:.5">${["A","B","C","D"][i]}.</span>${opt}</button>`;
+  }).join("");
+  const fb = answered ? `<div style="padding:12px 15px;border-radius:10px;margin:2px 0 14px;font-size:13px;font-weight:600;line-height:1.55;background:${sel===q.correct?"#ECFDF5":"#FFF1F2"};color:${sel===q.correct?"#065F46":"#9F1239"}">${sel===q.correct?"✅ Corretto! ":"❌ Non proprio. "}${q.explanation}</div>` : "";
+  const nxt = answered ? `<div style="text-align:right"><button onclick="nextQ()" style="padding:10px 24px;border-radius:10px;border:none;background:${s.color};color:#fff;font-weight:800;cursor:pointer;font-size:14px;font-family:inherit">${isLast?"Vedi il risultato 🎉":"Prossima →"}</button></div>` : "";
+  el.innerHTML=`
+    <div class="card" style="max-width:640px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:12.5px;font-weight:700;color:${s.color}">
+        <span>Domanda ${qs.qIdx+1} di ${tot}</span>
+      </div>
+      <div style="height:5px;background:#F0EDE8;border-radius:3px;margin-bottom:22px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${s.color};border-radius:3px;transition:width .4s"></div>
+      </div>
+      <p style="font-weight:800;font-size:16px;line-height:1.55;color:#111;margin-bottom:20px">${q.question}</p>
+      ${opts}${fb}${nxt}
+    </div>`;
+}
+
+function renderScore(data) {
+  const el=document.getElementById("content"), s=S();
+  const sc=qstate.finalScore, tot=data.questions.length, pct=Math.round((sc/tot)*100);
+  const [ico,msg] = sc===tot?["🎉","Perfetto! Sei un fenomeno!"]:sc>=tot*.8?["🌟","Ottimo lavoro!"]:sc>=tot*.6?["👍","Bene, continua così!"]:["📚","Ripassia ancora un po'!"];
+  el.innerHTML=`
+    <div style="background:#fff;border-radius:16px;padding:44px 32px;border:1px solid #EEE9E2;text-align:center;animation:fadeup .3s ease;max-width:520px">
+      <div style="font-size:52px;margin-bottom:8px">${ico}</div>
+      <h2 style="font-family:Nunito,sans-serif;font-weight:900;font-size:22px;color:#111;margin-bottom:10px">${msg}</h2>
+      <div style="display:flex;align-items:baseline;justify-content:center;gap:4px;margin-bottom:10px">
+        <span style="font-size:54px;font-weight:900;font-family:Nunito,sans-serif;color:${s.color}">${sc}</span>
+        <span style="font-size:24px;color:#BBB;font-family:Nunito,sans-serif">/${tot}</span>
+      </div>
+      <div style="max-width:260px;margin:0 auto 8px">
+        <div style="height:7px;background:#F0EDE8;border-radius:4px;overflow:hidden">
+          <div id="sbar" style="height:100%;width:0%;background:${s.color};border-radius:4px;transition:width .8s ease"></div>
+        </div>
+        <p style="color:#999;font-size:12.5px;margin-top:7px">${pct}% di risposte corrette</p>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap">
+        <button onclick="retryQ()" style="padding:11px 24px;border-radius:10px;border:none;background:${s.color};color:#fff;font-weight:800;cursor:pointer;font-size:13.5px;font-family:inherit">🔄 Riprova</button>
+        <button onclick="switchTab('summary')" style="padding:11px 24px;border-radius:10px;border:2px solid ${s.color};background:none;color:${s.color};font-weight:800;cursor:pointer;font-size:13.5px;font-family:inherit">📝 Rileggi il riassunto</button>
+      </div>
+    </div>`;
+  setTimeout(()=>{ const b=document.getElementById("sbar"); if(b) b.style.width=pct+"%"; }, 120);
+}
+
+/* ══════════════════════════════
+   AZIONI GLOBALI
+══════════════════════════════ */
+window.ansQ = function(i) {
+  if (qstate.answers[qstate.qIdx]!==undefined) return;
+  qstate.answers[qstate.qIdx]=i;
+  renderQ(cache[ck()+":quiz"]);
+};
+window.nextQ = function() {
+  const data=cache[ck()+":quiz"];
+  if (qstate.qIdx+1>=data.questions.length) {
+    const sc=Object.entries(qstate.answers).filter(([i,v])=>v===data.questions[+i].correct).length;
+    qstate.done=true; qstate.finalScore=sc; renderScore(data);
+  } else { qstate.qIdx++; renderQ(data); }
+};
+window.retryQ = function() {
+  qstate={qIdx:0,answers:{},done:false,finalScore:0}; renderContent();
+};
+window.retry = function(w) {
+  delete cache[ck()+":"+w]; loadContent(w);
+};
+window.switchTab = function(t) {
+  tab=t;
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+  if (t==="quiz"&&!qstate) qstate={qIdx:0,answers:{},done:false,finalScore:0};
+  const k=ck()+":"+t;
+  if (!cache[k]&&!loading[k]) loadContent(t); else renderContent();
+};
+
+/* ══════════════════════════════
+   CARICAMENTO CONTENUTI
+══════════════════════════════ */
+async function loadContent(which) {
+  const k=ck()+":"+which;
+  if (cache[k]!==undefined||loading[k]) return;
+  loading[k]=true; renderContent();
+  const s=S(), t=tn();
+  try {
+    if (which==="summary") {
+      const txt = await callAPI(
+        "Sei un insegnante italiano appassionato. Scrivi un riassunto per studenti dai 12 ai 18 anni. "+
+        "Tono diretto, caldo, coinvolgente — parla direttamente a loro. "+
+        "Usa **grassetto** attorno a 4-6 termini chiave importanti. "+
+        "Inserisci 2-3 emoji tematiche nel corpo del testo (mai come prima parola). "+
+        "Struttura: apertura che spiega perché l'argomento conta oggi; punti chiave con date, "+
+        "figure e concetti fondamentali; curiosità finale preceduta da '🔍 Lo sapevi che...'. "+
+        "Lunghezza: 280-320 parole. Scrivi SOLO il testo del riassunto. "+
+        "NIENTE titoli, NIENTE intestazioni, NIENTE frasi introduttive.",
+        "Materia: "+s.label+" | Argomento: "+t
+      );
+      cache[k] = txt.trim();
+    }
+    else if (which==="map") {
+      const txt = await callAPI(
+        "Crea una mappa concettuale per studenti italiani 12-18 anni. "+
+        "Rispondi ESCLUSIVAMENTE con JSON valido. Zero testo prima o dopo. Zero backtick. Solo JSON grezzo.\n\n"+
+        "Schema:\n{\"nodes\":[{\"id\":\"c0\",\"label\":\"Titolo breve\",\"type\":\"central\"},{\"id\":\"m1\",\"label\":\"Concetto\",\"type\":\"main\"},{\"id\":\"s1\",\"label\":\"Dettaglio\",\"type\":\"sub\"},{\"id\":\"e1\",\"label\":\"Esempio\",\"type\":\"example\"}],\"edges\":[{\"from\":\"c0\",\"to\":\"m1\"},{\"from\":\"m1\",\"to\":\"s1\"},{\"from\":\"m1\",\"to\":\"e1\"}]}\n\n"+
+        "Regole:\n"+
+        "- 1 nodo central (max 3 parole)\n"+
+        "- 3-5 nodi main (max 3 parole)\n"+
+        "- 4-7 nodi sub (max 4 parole)\n"+
+        "- 2-4 nodi example (max 4 parole)\n"+
+        "- Ogni sub e example deve avere un edge da un nodo main\n"+
+        "- Tutto in italiano, JSON valido puro",
+        s.label+" — "+t
+      );
+      const parsed = extractJSON(txt);
+      if (!parsed.nodes||!parsed.edges) throw new Error("struttura non valida");
+      cache[k] = parsed;
+    }
+    else if (which==="quiz") {
+      const txt = await callAPI(
+        "Crea esattamente 5 domande quiz per studenti italiani 12-18 anni. "+
+        "Rispondi ESCLUSIVAMENTE con JSON valido. Zero testo prima o dopo. Zero backtick. Solo JSON grezzo.\n\n"+
+        "Schema:\n{\"questions\":[{\"question\":\"Domanda?\",\"options\":[\"A\",\"B\",\"C\",\"D\"],\"correct\":0,\"explanation\":\"Spiegazione didattica.\"}]}\n\n"+
+        "Regole:\n"+
+        "- Esattamente 5 domande\n"+
+        "- correct è l'indice 0-3 della risposta giusta\n"+
+        "- Opzioni sbagliate plausibili\n"+
+        "- Varia i tipi: definizione, data, figura, causa-effetto, concetto\n"+
+        "- Spiegazione didattica (2-3 frasi)\n"+
+        "- Tutto in italiano, JSON valido puro",
+        s.label+" — "+t
+      );
+      const parsed = extractJSON(txt);
+      if (!parsed.questions||!Array.isArray(parsed.questions)) throw new Error("struttura non valida");
+      parsed.questions = parsed.questions.slice(0,5);
+      cache[k] = parsed;
+      if (!qstate) qstate={qIdx:0,answers:{},done:false,finalScore:0};
+    }
+  } catch(e) {
+    if (e.message==="no_key") { showKeyModal("Inserisci prima la tua API key!"); loading[k]=false; return; }
+    if (e.message==="auth_error") { cache[k]={__err:true,__auth:true}; }
+    else { cache[k]={__err:true}; }
+  }
+  loading[k]=false;
+  renderContent();
+}
+
+/* ══════════════════════════════
+   RENDER ALL
+══════════════════════════════ */
+function renderAll() {
+  setVars(); renderNav(); renderPills(); renderTopics(); renderHeader();
+  const k=ck()+":"+tab;
+  if (!cache[k]&&!loading[k]) loadContent(tab); else renderContent();
+}
+
+/* ══════════════════════════════
+   INIT
+══════════════════════════════ */
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click",()=>window.switchTab(b.dataset.t)));
+document.getElementById("srch").addEventListener("input", e=>{ srch=e.target.value; renderTopics(); });
+document.getElementById("srch").addEventListener("focus", e=>e.target.style.borderColor=S().color);
+document.getElementById("srch").addEventListener("blur",  e=>e.target.style.borderColor="#EEE9E2");
+
+if (API_KEY) {
+  hideKeyModal();
+  renderAll();
+} else {
+  showKeyModal();
+}
+</script>
+</body>
+</html>
